@@ -4,8 +4,8 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-const livroRoutesModule = require("../../src/routes/livroRoutes");
-const livroRoutes = livroRoutesModule.default || livroRoutesModule;
+const controllerModule = require("../../src/controllers/livroController");
+const livroController = controllerModule.default || controllerModule;
 
 dotenv.config();
 
@@ -39,6 +39,10 @@ app.get("/api", (req, res) => {
   });
 });
 
-app.use("/api/livros", livroRoutes);
+app.get("/api/livros", livroController.listarLivros);
+app.get("/api/livros/:id", livroController.buscarLivro);
+app.post("/api/livros", livroController.criarLivro);
+app.put("/api/livros/:id", livroController.atualizarLivro);
+app.delete("/api/livros/:id", livroController.excluirLivro);
 
 module.exports.handler = serverless(app);
