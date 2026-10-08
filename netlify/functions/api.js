@@ -3,7 +3,9 @@ const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const livroRoutes = require("../../src/routes/livroRoutes");
+
+const livroRoutesModule = require("../../src/routes/livroRoutes");
+const livroRoutes = livroRoutesModule.default || livroRoutesModule;
 
 dotenv.config();
 
