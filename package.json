@@ -1,6 +1,7 @@
 {
   "name": "api-biblioteca",
   "version": "1.0.0",
+  "type": "module",
   "description": "CRUD de livros com Node.js, Express e Mongoose",
   "main": "src/server.js",
   "scripts": {
