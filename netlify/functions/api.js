@@ -35,5 +35,3 @@ app.get("/", (req, res) => {
 });
 
 app.use("/livros", livroRoutes);
-
-export const handler = serverless(app);
