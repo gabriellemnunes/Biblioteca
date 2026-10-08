@@ -1,94 +1,42 @@
-const Livro = require("../models/Livro");
+const serverless = require("serverless-http");
+const dotenv = require("dotenv");
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const livroRoutes = require("../../src/routes/livroRoutes");
 
-function tratarErro(res, error) {
-  if (error.code === 11000) {
-    return res.status(409).json({ mensagem: "Já existe um livro com este ISBN" });
-  }
-  res.status(400).json({ mensagem: error.message });
-}
+dotenv.config();
 
-// ISBN vazio não pode ser salvo como "" (índice único): é removido do documento
-function prepararDados(body) {
-  const { isbn, ...resto } = body;
-  if (isbn === undefined) return { set: resto, unset: {} };
-  if (typeof isbn === "string" && isbn.trim() !== "") {
-    return { set: { ...resto, isbn: isbn.trim() }, unset: {} };
-  }
-  return { set: resto, unset: { isbn: 1 } };
-}
+const app = express();
 
-async function listarLivros(req, res) {
+app.use(cors());
+app.use(express.json());
+
+let conexao;
+
+app.use(async (req, res, next) => {
   try {
-    const livros = await Livro.find().sort({ createdAt: -1 });
-    res.json(livros);
-  } catch (error) {
-    res.status(500).json({ mensagem: error.message });
-  }
-}
-
-async function buscarLivro(req, res) {
-  try {
-    const livro = await Livro.findById(req.params.id);
-
-    if (!livro) {
-      return res.status(404).json({ mensagem: "Livro não encontrado" });
+    if (!conexao) {
+      conexao = mongoose.connect(process.env.MONGODB_URI);
     }
 
-    res.json(livro);
+    await conexao;
+    next();
   } catch (error) {
-    res.status(400).json({ mensagem: error.message });
-  }
-}
+    console.error("Erro ao conectar ao MongoDB:", error);
 
-async function criarLivro(req, res) {
-  try {
-    const { set } = prepararDados(req.body);
-    const livro = await Livro.create(set);
-    res.status(201).json(livro);
-  } catch (error) {
-    tratarErro(res, error);
-  }
-}
-
-async function atualizarLivro(req, res) {
-  try {
-    const { set, unset } = prepararDados(req.body);
-    const update = { $set: set };
-    if (Object.keys(unset).length) update.$unset = unset;
-
-    const livro = await Livro.findByIdAndUpdate(req.params.id, update, {
-      new: true,
-      runValidators: true
+    res.status(500).json({
+      mensagem: "Erro ao conectar ao banco de dados"
     });
-
-    if (!livro) {
-      return res.status(404).json({ mensagem: "Livro não encontrado" });
-    }
-
-    res.json(livro);
-  } catch (error) {
-    tratarErro(res, error);
   }
-}
+});
 
-async function excluirLivro(req, res) {
-  try {
-    const livro = await Livro.findByIdAndDelete(req.params.id);
+app.get("/api", (req, res) => {
+  res.json({
+    mensagem: "API da Biblioteca funcionando"
+  });
+});
 
-    if (!livro) {
-      return res.status(404).json({ mensagem: "Livro não encontrado" });
-    }
+app.use("/api/livros", livroRoutes);
 
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({ mensagem: error.message });
-  }
-}
-
-module.exports = {
-  listarLivros,
-  buscarLivro,
-  criarLivro,
-  atualizarLivro,
-  excluirLivro
-};
+module.exports.handler = serverless(app);
