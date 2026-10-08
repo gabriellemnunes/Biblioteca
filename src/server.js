@@ -1,13 +1,18 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const livroRoutes = require("./routes/livroRoutes");
+import dns from "node:dns";
+import dotenv from "dotenv";
+import express, { json } from "express";
+import { connect } from "mongoose";
+import cors from "cors";
+import livroRoutes from "./routes/livroRoutes.js";
+
+dns.setServers(["8.8.4.4"]);
+
+dotenv.config();
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
 app.get("/", (req, res) => {
   res.json({ mensagem: "API da Biblioteca funcionando" });
@@ -19,8 +24,7 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/biblioteca";
 
-mongoose
-  .connect(MONGODB_URI)
+connect(MONGODB_URI)
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Servidor rodando em http://localhost:${PORT}`);
